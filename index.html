@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffa000">
+  <meta name="description" content="TrackMyBus - real-time school and college fleet tracking for admins, drivers, parents and students.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TrackMyBus">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <title>TrackMyBus</title>
+  <style>
+    :root {
+      --orange: #ffa000;
+      --orange-dark: #e08a00;
+      --deep-orange: #e47a00;
+      --ink: #171615;
+      --muted: #77736e;
+      --line: #e7e4e0;
+      --red: #c71920;
+      --canvas: #f4f4f4;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--canvas); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 18px #00000008;
+    }
+    .home-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 16px;
+      background: linear-gradient(145deg, #fff 0%, #f9f8f7 62%, #efeeed 100%);
+    }
+    .home-content { width: 100%; }
+    .home-brand { text-align: center; margin-bottom: 28px; }
+    .bus-logo {
+      display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 12px;
+      border-radius: 50%; background: var(--orange); color: #111; font-size: 30px;
+      box-shadow: 0 6px 18px #ffa00036;
+    }
+    .home-brand h1 { margin: 0; font-size: 43px; letter-spacing: -2px; line-height: 1.1; }
+    .home-brand p { margin: 8px 0 0; color: #66615c; font-size: 14px; }
+    .admin-choices { display: flex; gap: 10px; margin-bottom: 19px; }
+    .admin-choices button {
+      flex: 1; height: 42px; border: 1px solid var(--line); border-radius: 24px;
+      background: white; color: #65615c; font-size: 10px; font-weight: 800; letter-spacing: .35px;
+    }
+    .role-links { display: grid; gap: 11px; }
+    .role-link {
+      height: 58px; display: flex; align-items: center; gap: 13px; padding: 0 15px;
+      border: 1px solid #e8e6e3; border-radius: 12px; background: #fff;
+      color: #171615; font-size: 17px; font-weight: 800; text-align: left;
+    }
+    .role-link:hover, .admin-choices button:hover { border-color: var(--orange); }
+    .role-icon {
+      display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px;
+      border-radius: 50%; background: #f4f3f1; color: #77736d; font-size: 19px;
+    }
+    .role-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .chevron { margin-left: auto; color: #aaa49d; font-size: 22px; font-weight: 400; }
+    .terms-card {
+      display: flex; align-items: flex-start; gap: 9px; padding: 13px 14px;
+      margin-top: 20px; border: 1px solid #e8e6e3; border-radius: 8px;
+      background: white; color: #69645e; font-size: 12px; line-height: 1.5;
+    }
+    .terms-card input { flex: 0 0 auto; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--orange); }
+    .terms-card a { color: var(--deep-orange); text-decoration: none; }
+
+    .orange-header {
+      min-height: 86px; padding: 14px 12px 10px; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 6px; border-radius: 0 0 12px 12px;
+      background: var(--orange); box-shadow: 0 3px 5px #00000016; text-align: center;
+    }
+    .orange-header .wordmark { font-size: 20px; font-weight: 850; letter-spacing: -.5px; }
+    .orange-header .wordmark .bus-small { font-size: 17px; margin-right: 6px; }
+    .orange-header .subtitle { font-size: 13px; font-weight: 700; }
+    .page-pad { padding: 16px 13px 28px; }
+    .form-card, .content-card {
+      padding: 15px; border: 1px solid #e9e6e2; border-radius: 10px;
+      background: white; box-shadow: 0 2px 4px #00000008;
+    }
+    .card-title { display: flex; gap: 8px; align-items: center; margin: 0 0 14px; color: var(--deep-orange); font-size: 17px; font-weight: 800; }
+    .card-title .symbol { font-size: 18px; }
+    .form-section + .form-section { margin-top: 14px; }
+    .field { display: block; margin: 0 0 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field > span, .field > label {
+      display: block; margin-bottom: 5px; color: #56514c; font-size: 9px;
+      font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+    }
+    .field input, .field select {
+      display: block; width: 100%; height: 34px; padding: 7px 10px;
+      border: 1px solid #e8e6e2; border-radius: 7px; outline: none;
+      background: #fafaf9; color: #333; font-size: 12px;
+    }
+    .field input:focus, .field select:focus { border-color: var(--orange); box-shadow: 0 0 0 2px #ffa00025; }
+    .segment { display: flex; padding: 3px; border: 1px solid #e6e4e1; border-radius: 7px; background: #f3f2f0; }
+    .segment button { flex: 1; height: 25px; border: 0; border-radius: 5px; background: transparent; color: #777; font-size: 10px; font-weight: 700; }
+    .segment button.selected { background: #fff; color: #333; box-shadow: 0 1px 3px #00000012; }
+    .empty-fleet { height: 135px; border: 1px solid #eeeae5; border-radius: 8px; background: #fff; }
+    .notice { display: flex; gap: 10px; align-items: center; min-height: 56px; padding: 10px 13px; margin-top: 12px; background: #11100f; color: #fff; font-size: 12px; line-height: 1.4; }
+    .notice span:first-child { color: var(--orange); font-size: 17px; }
+    .primary {
+      width: 100%; min-height: 47px; border: 0; border-radius: 7px;
+      background: var(--deep-orange); color: #111; font-size: 13px; font-weight: 800;
+    }
+    .primary:hover { filter: brightness(1.06); }
+    .driver-login { padding: 30px 14px 22px; min-height: 100vh; background: #fafaf9; }
+    .driver-auth-card {
+      padding: 21px 20px; border: 1px solid #e8e5e1; border-radius: 11px;
+      background: #fff; box-shadow: 0 2px 5px #00000008;
+    }
+    .driver-auth-icon { width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 12px; border: 1px solid #ece9e5; border-radius: 50%; background: #f8f7f5; color: var(--deep-orange); font-size: 23px; }
+    .driver-auth-card h2 { margin: 0; text-align: center; font-size: 20px; }
+    .driver-auth-card .helper { margin: 9px 0 25px; color: #77716b; text-align: center; font-size: 12px; line-height: 1.5; }
+    .driver-auth-card .field { margin-bottom: 17px; }
+    .driver-auth-card .field input { height: 43px; background: #fff; font-size: 14px; }
+    .warning { padding: 11px; margin: 18px 0; border: 1px solid #ffe5a1; border-radius: 7px; background: #fffbed; color: #b64d00; font-size: 11px; }
+    .below-form { margin: 27px 0 0; color: #8c8780; text-align: center; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+    .error-text { min-height: 16px; margin: 7px 0 0; color: var(--red); font-size: 11px; }
+
+    .admin-dashboard .orange-header { min-height: 72px; }
+    .admin-dashboard .orange-header .wordmark { font-size: 30px; }
+    .dashboard-body { padding: 14px 12px 78px; background: #fbfbfa; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 17px; }
+    .stat {
+      min-height: 95px; padding: 14px; border: 1px solid #e9e6e2; border-radius: 11px;
+      background: linear-gradient(130deg, #fff9ee, #fff); box-shadow: 0 1px 3px #00000008;
+    }
+    .stat:nth-child(2) { background: linear-gradient(130deg, #fff, #fff4f2); }
+    .stat small { display: block; color: #858078; font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+    .stat strong { display: inline-block; margin: 6px 6px 0 0; font-size: 37px; line-height: 1; }
+    .stat:first-child strong { color: var(--orange); }
+    .stat em { color: #168e6e; font-size: 11px; font-style: normal; }
+    .dashboard-card { padding: 14px; margin-bottom: 13px; border: 1px solid #e9e6e2; border-radius: 11px; background: #fff; box-shadow: 0 1px 3px #00000008; }
+    .dashboard-card h2 { margin: 0 0 13px; font-size: 16px; }
+    .dashboard-card .field { margin-bottom: 12px; }
+    .dashboard-card .field input, .dashboard-card .field select { height: 42px; background: #fafaf9; font-size: 13px; }
+    .dashboard-card .primary { min-height: 44px; margin-top: 2px; background: var(--orange); font-size: 14px; }
+    .coming-soon { padding: 21px 14px; margin-bottom: 13px; border: 2px dashed #ffe1a5; border-radius: 12px; text-align: center; }
+    .coming-soon .route-icon { color: #ffb632; font-size: 24px; }
+    .coming-soon h2 { margin: 8px 0; font-size: 19px; }
+    .coming-soon p { margin: 0; color: #8a857f; font-size: 12px; line-height: 1.5; }
+    .tag { display: inline-block; padding: 5px 10px; margin-top: 11px; border-radius: 20px; background: #fff3d2; color: #bb7a00; font-size: 10px; font-weight: 800; }
+    .approval { display: flex; align-items: center; gap: 10px; padding: 9px; margin-top: 8px; border: 1px solid #ebe9e6; border-radius: 8px; background: #fafaf9; }
+    .avatar { width: 37px; height: 37px; display: grid; place-items: center; flex: 0 0 37px; border: 1px solid #eee; border-radius: 50%; background: #fff; color: #777; font-size: 14px; }
+    .approval-copy { flex: 1; min-width: 0; }
+    .approval-copy b { display: block; font-size: 12px; }
+    .approval-copy small { display: block; margin-top: 4px; color: #89847e; font-size: 10px; }
+    .approve { width: 36px; height: 36px; border: 0; border-radius: 7px; background: #0a9b72; color: white; font-size: 20px; }
+    .invite-row { display: flex; gap: 7px; }
+    .invite-row button { flex: 1; height: 39px; border: 1px solid #e9e7e4; border-radius: 7px; background: #f6f6f5; font-size: 11px; font-weight: 700; }
+    .subscription { display: flex; justify-content: space-between; align-items: center; }
+    .pro-tag { padding: 4px 7px; border: 1px solid #ffe593; border-radius: 4px; background: #fff6ca; color: #ac7900; font-size: 9px; font-weight: 800; }
+    .exit-account { width: 100%; height: 40px; border: 1px solid #ffd1d0; border-radius: 7px; background: #fff4f3; color: #ce2727; font-size: 11px; font-weight: 800; }
+    .bottom-nav { position: fixed; z-index: 5; bottom: 0; left: 50%; transform: translateX(-50%); width: min(100%, 390px); height: 58px; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e9e6e2; background: #fff; }
+    .bottom-nav button { display: grid; gap: 3px; justify-items: center; padding: 3px; border: 0; background: transparent; color: #69655f; font-size: 9px; }
+    .bottom-nav button b { font-size: 16px; }
+    .bottom-nav button.active { color: var(--orange-dark); }
+
+    .driver-dashboard { max-width: 310px; }
+    .driver-dashboard .orange-header { min-height: 73px; }
+    .driver-dashboard .orange-header .wordmark { font-size: 18px; }
+    .driver-dashboard .orange-header .subtitle { padding: 4px 13px; border-radius: 20px; background: #111; color: white; font-size: 9px; }
+    .driver-body { padding: 15px 12px 75px; background: #fff8f5; }
+    .driver-profile { display: flex; align-items: center; gap: 11px; padding: 11px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 10px; background: white; }
+    .driver-profile .avatar { background: #181818; color: white; }
+    .driver-profile b { font-size: 15px; }
+    .driver-profile small { display: block; margin-top: 4px; color: #777; font-size: 9px; }
+    .onduty { margin-left: auto; padding: 7px 10px; border-radius: 16px; background: var(--orange); font-size: 9px; font-weight: 800; }
+    .tiny-tabs { display: flex; justify-content: space-around; padding: 9px 2px; margin: 0 -12px -10px; border-radius: 0 0 12px 12px; background: var(--orange); font-size: 9px; font-weight: 800; }
+    .tiny-tabs span { padding: 4px 13px; border-radius: 20px; }
+    .tiny-tabs span.active { background: #111; color: #fff; }
+    .trip-control { padding: 15px 10px; margin-bottom: 6px; border: 1px solid #ddd; border-radius: 10px; background: #fff; }
+    .micro-heading { margin: 0 0 12px; color: #333; font-size: 9px; font-weight: 900; letter-spacing: 1px; }
+    .start-trip {
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      width: 144px; height: 144px; margin: 18px auto 4px; border: 0; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 5px 9px #0000001c; font-size: 18px; font-weight: 800;
+    }
+    .start-trip span { font-size: 22px; margin-bottom: 6px; }
+    .caretaker { display: flex; justify-content: space-between; align-items: center; padding: 11px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 9px; background: white; font-size: 12px; }
+    .caretaker input, .preference input { accent-color: var(--orange); }
+    .route-map {
+      height: 220px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 9px;
+      position: relative; overflow: hidden;
+      background-color: #d9dedb;
+      background-image: linear-gradient(32deg, transparent 45%, #f4f2eb 46%, #f4f2eb 49%, transparent 50%),
+        linear-gradient(112deg, transparent 45%, #f4f2eb 46%, #f4f2eb 49%, transparent 50%),
+        repeating-linear-gradient(0deg, transparent 0 35px, #c9ceca 36px 38px),
+        repeating-linear-gradient(90deg, transparent 0 48px, #c9ceca 49px 51px);
+    }
+    .route-map::before { content: "◉ Live Route"; position: absolute; top: 10px; left: 10px; padding: 5px 8px; border-radius: 12px; background: #fff; font-size: 9px; font-weight: 800; }
+    .route-map::after { content: "🚌"; position: absolute; top: 42%; left: 48%; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: #161616; color: var(--orange); }
+    .map-route { position: absolute; width: 120%; height: 4px; top: 58%; left: -10%; background: var(--orange); transform: rotate(-43deg); border-radius: 9px; }
+    .emergency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+    .emergency-grid button { min-height: 63px; border: 0; border-radius: 7px; background: var(--red); color: white; font-size: 10px; }
+    .emergency-grid b { display: block; font-size: 17px; }
+    .support-row { display: flex; justify-content: space-between; align-items: center; padding: 11px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; font-size: 11px; font-weight: 700; }
+    .support-row button { padding: 5px 11px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 9px; }
+    .roster { padding: 11px; border: 1px solid #ddd; border-radius: 9px; background: white; }
+    .roster .approval { padding: 7px; margin-top: 7px; }
+    .roster .avatar { width: 29px; height: 29px; flex-basis: 29px; font-size: 10px; }
+    .roster .approval-copy b { font-size: 10px; }
+    .roster .approval-copy small { font-size: 9px; }
+    .board-button { width: 29px; height: 29px; border: 1px solid #ddd; border-radius: 50%; background: #fff; color: #444; font-size: 13px; }
+    .board-button.done { border: 0; background: #2ba98d; color: white; }
+    .driver-dashboard .bottom-nav { height: 53px; }
+
+    .parent-login { min-height: 100vh; display: flex; align-items: center; padding: 35px 14px; background: #fafaf9; }
+    .parent-card { width: 100%; padding: 21px 19px 18px; border: 1px solid #e7e4e1; border-top: 3px solid var(--deep-orange); border-radius: 11px; background: white; box-shadow: 0 8px 18px #00000014; text-align: center; }
+    .parent-card .bus-large { color: var(--deep-orange); font-size: 28px; }
+    .parent-card h2 { margin: 11px 0 0; font-size: 20px; }
+    .parent-card .sub { margin: 9px 0 29px; color: #89827b; font-size: 11px; }
+    .parent-card .field { text-align: left; margin-bottom: 19px; }
+    .parent-card .field > span { color: #24211f; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+    .parent-card .field input { height: 39px; border-color: #929baa; border-radius: 0; background: white; font-size: 13px; }
+    .pair-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .pair-fields .field:first-child input { border-radius: 0 0 0 0; }
+    .pair-fields .field:last-child input { border-left: 0; }
+    .parent-warning { padding: 12px; margin: 3px 0 18px; border: 1px solid #ffc8c8; border-radius: 6px; color: #d52323; background: #fff6f6; font-size: 11px; line-height: 1.5; text-align: left; }
+    .parent-card .primary { height: 47px; background: var(--deep-orange); color: #fff; font-size: 12px; letter-spacing: .2px; }
+    .help-link { display: inline-block; margin-top: 23px; color: #8a837d; font-size: 11px; text-decoration: none; }
+
+    .parent-dashboard { background: #faf9f7; }
+    .parent-dashboard .orange-header { min-height: 87px; }
+    .parent-dashboard .orange-header .wordmark { font-size: 22px; }
+    .parent-dashboard .orange-header .subtitle { padding: 5px 13px; border-radius: 20px; background: #111; color: #fff; font-size: 10px; }
+    .parent-body { padding-bottom: 78px; }
+    .dark-map {
+      height: 400px; position: relative; overflow: hidden; background-color: #273442;
+      background-image:
+        linear-gradient(30deg, transparent 48%, #57626b 49%, #57626b 50%, transparent 51%),
+        linear-gradient(130deg, transparent 46%, #58646c 47%, #58646c 48%, transparent 49%),
+        repeating-linear-gradient(0deg, transparent 0 31px, #354552 32px 35px),
+        repeating-linear-gradient(90deg, transparent 0 39px, #354552 40px 43px);
+    }
+    .park { position: absolute; background: #28504e; opacity: .85; border-radius: 28% 40% 33% 27%; }
+    .park.left { top: 5%; left: 0; width: 28%; height: 23%; }
+    .park.right { top: 13%; right: 0; width: 27%; height: 24%; }
+    .dark-map .place { position: absolute; color: #a8b7bd; font-size: 9px; text-shadow: 0 1px #111; }
+    .dark-map .place.p1 { top: 27%; left: 32%; font-size: 12px; }
+    .dark-map .place.p2 { top: 10%; left: 20%; }
+    .dark-map .place.p3 { top: 44%; right: 12%; }
+    .dark-route { position: absolute; width: 95%; height: 5px; top: 55%; left: 1%; border-radius: 10px; background: #ffad29; box-shadow: 0 0 10px #ffad29; transform: rotate(-28deg); }
+    .dark-bus { position: absolute; top: 51%; left: 47%; display: grid; place-items: center; width: 31px; height: 31px; border: 2px solid var(--orange); border-radius: 50%; background: #111; color: var(--orange); }
+    .map-bubble { position: absolute; top: 45%; left: 36%; padding: 5px 8px; border-radius: 10px; background: var(--orange); color: #111; font-size: 9px; font-weight: 800; }
+    .map-tools { position: absolute; right: 11px; bottom: 18px; display: grid; gap: 6px; }
+    .map-tools button { width: 37px; height: 37px; border: 1px solid #ddd; border-radius: 5px; background: #fff; font-size: 20px; }
+    .map-caption { padding: 5px 10px; background: #293039; color: #adb9c5; text-align: center; font-size: 10px; font-weight: 700; }
+    .parent-content { padding: 14px 14px; }
+    .content-card { padding: 14px; margin-bottom: 12px; }
+    .content-card h2 { font-size: 17px; margin: 0 0 12px; }
+    .range-labels { display: flex; justify-content: space-between; color: #76716b; font-size: 10px; font-weight: 700; }
+    .range-control { accent-color: var(--orange); width: 100%; margin: 10px 0 5px; }
+    .range-current { color: var(--deep-orange); text-align: center; font-size: 12px; font-weight: 800; }
+    .detail-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0 0; margin-top: 9px; border-top: 1px solid #e8e5e1; font-size: 12px; }
+    .detail-line .key { color: #77716b; font-weight: 700; }
+    .arrival { color: var(--deep-orange); font-size: 22px; font-weight: 800; }
+    .preference { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #ece9e6; font-size: 12px; }
+    .preference:last-child { border-bottom: 0; }
+    .preference small { display: block; margin-top: 4px; color: #77716b; font-size: 10px; }
+    .preference.sos { color: #e21d25; font-weight: 700; }
+    .parent-dashboard .bottom-nav { height: 59px; }
+    .fab {
+      position: absolute; z-index: 6; right: 16px; bottom: 76px;
+      width: 46px; height: 46px; display: grid; place-items: center;
+      border: 0; border-radius: 50%; background: var(--orange); color: #111;
+      font-size: 19px; box-shadow: 0 6px 16px #ffa00059;
+    }
+    .fab .dot { position: absolute; top: 4px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: #e21d25; border: 2px solid #fff; }
+    .sos-wrap { display: grid; justify-items: center; gap: 9px; padding: 12px 0 2px; }
+    .sos-button {
+      width: 98px; height: 98px; display: grid; place-items: center; align-content: center;
+      border: 0; border-radius: 50%; background: radial-gradient(circle at 32% 26%, #e8412f, #b11010);
+      color: #fff; font-size: 14px; font-weight: 900; letter-spacing: 1px;
+      box-shadow: 0 8px 20px #b1101059; user-select: none; touch-action: none;
+    }
+    .sos-button b { display: block; font-size: 30px; line-height: 1; }
+    .sos-button.holding { transform: scale(.95); box-shadow: 0 0 0 10px #b1101026; }
+    .sos-hint { color: #8a857f; font-size: 11px; text-align: center; }
+    .trip-toggle { display: flex; border: 1px solid #e2dfdb; border-radius: 20px; overflow: hidden; flex: 0 0 auto; }
+    .trip-toggle button { border: 0; padding: 6px 13px; background: #f4f3f1; color: #77716b; font-size: 9px; font-weight: 800; }
+    .trip-toggle button.on { background: var(--orange); color: #111; }
+    .trip-toggle button.out.on { background: #3c3c3c; color: #fff; }
+    .toast {
+      position: fixed; z-index: 20; bottom: 18px; left: 50%; transform: translate(-50%, 18px);
+      padding: 10px 15px; border-radius: 8px; background: #191816; color: white;
+      opacity: 0; pointer-events: none; font-size: 12px; transition: .2s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (min-width: 700px) {
+      .phone { margin: 30px auto; min-height: calc(100vh - 60px); border-radius: 4px; }
+      .screen.active:has(.phone) { padding: 1px 0; }
+      .home-screen { min-height: calc(100vh - 60px); }
+    }
+    @media (max-width: 360px) {
+      .home-brand h1 { font-size: 38px; }
+      .parent-content { padding-right: 10px; padding-left: 10px; }
+      .dark-map { height: 350px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="home" class="screen active">
+    <main class="phone home-screen">
+      <div class="home-content">
+        <div class="home-brand">
+          <div class="bus-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="31" height="31" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></div>
+          <h1>TrackMyBus</h1>
+          <p>School &amp; College Fleet Tracking</p>
+        </div>
+        <div class="admin-choices">
+          <button type="button" data-screen="register">SCHOOL ADMIN</button>
+          <button type="button" data-screen="register">COLLEGE ADMIN</button>
+        </div>
+        <div class="role-links">
+          <button class="role-link" type="button" data-screen="driver-login"><span class="role-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15V6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5V15"/><path d="M4 9h16v8H4zM7 17v2m10-2v2M7.5 13h.01M16.5 13h.01M7 6.5h10"/></svg></span>DRIVER<span class="chevron">›</span></button>
+          <button class="role-link" type="button" data-screen="parent-login"><span class="role-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19v-1.5a5.5 5.5 0 0 1 11 0V19zM14 14.5a4.5 4.5 0 0 1 7.5 3.3V19h-6"/></svg></span>PARENT<span class="chevron">›</span></button>
+          <button class="role-link" type="button" data-screen="parent-login"><span class="role-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5L2 9z"/><path d="M6 11v5c3.5 3 8.5 3 12 0v-5M22 9v6"/></svg></span>STUDENT<span class="chevron">›</span></button>
+        </div>
+        <label class="terms-card"><input type="checkbox"><span>I agree to the <a href="#" onclick="return false">Terms of Service</a> and <a href="#" onclick="return false">Privacy Policy</a> for tracking services.</span></label>
+      </div>
+    </main>
+  </div>
+
+  <div id="register" class="screen">
+    <main class="phone">
+      <header class="orange-header">
+        <div class="wordmark"><span class="bus-small"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></span>TrackMyBus</div>
+        <div class="subtitle">School Registration</div>
+      </header>
+      <div class="page-pad">
+        <form id="registerForm">
+          <section class="form-card form-section">
+            <h2 class="card-title"><span class="symbol">♧</span>Institution Details</h2>
+            <label class="field"><span>School name</span><input required placeholder="Enter full school name"></label>
+            <div class="field"><span>Curriculum type</span><div class="segment"><button type="button" class="selected">Normal</button><button type="button">International</button></div></div>
+            <label class="field"><span>Branch / campus name</span><input required placeholder="e.g., Main Campus"></label>
+            <label class="field"><span>Office contact number</span><input required type="tel" placeholder="+1 (555) 000-0000"></label>
+          </section>
+          <section class="form-card form-section">
+            <h2 class="card-title"><span class="symbol">♙</span>Location Data</h2>
+            <label class="field"><span>Street address</span><input required placeholder="Building number, Street name"></label>
+            <label class="field"><span>Region / zone</span><select required><option value="">Select Region</option><option>North</option><option>South</option><option>East</option><option>West</option></select></label>
+            <label class="field"><span>City</span><input required placeholder="City Name"></label>
+            <label class="field"><span>State / province</span><input required placeholder="State"></label>
+            <label class="field"><span>PIN / ZIP code</span><input required placeholder="Postal Code"></label>
+          </section>
+          <section class="form-card form-section">
+            <h2 class="card-title"><span class="symbol">▣</span>Fleet Configuration</h2>
+            <p style="color:#777;font-size:11px;line-height:1.5">Select the types of vehicles needed for this institution.</p>
+            <div class="empty-fleet"></div>
+          </section>
+          <button class="primary" style="margin-top:14px" type="submit">Continue to payment →</button>
+        </form>
+      </div>
+      <div class="notice"><span>ⓘ</span><span>School code is issued after payment confirms</span></div>
+    </main>
+  </div>
+
+  <div id="driver-login" class="screen">
+    <main class="phone driver-login">
+      <form class="driver-auth-card" id="driverForm">
+        <div class="driver-auth-icon">▣</div>
+        <h2>Driver Authentication</h2>
+        <p class="helper">Enter your details and assigned codes to access your route.</p>
+        <label class="field"><span>Driver name</span><input required placeholder="♙  John Doe"></label>
+        <label class="field"><span>Mobile number</span><input required type="tel" placeholder="▯  +1 (555) 000-0000"></label>
+        <hr style="border:0;border-top:1px solid #eee;margin:20px 0">
+        <label class="field"><span>Admin-driver code</span><input required placeholder="▣  AD-XXXX"></label>
+        <label class="field"><span>School code</span><input required placeholder="◇  SCH-XXXX"></label>
+        <div class="warning">⚠ &nbsp; Login fails if code is incorrect</div>
+        <button class="primary" type="submit">Continue&nbsp; →</button>
+        <p class="error-text" id="driverError" role="status"></p>
+      </form>
+      <p class="below-form">TRACKMYBUS FLEET OPTIMIZER</p>
+    </main>
+  </div>
+
+  <div id="admin-dashboard" class="screen">
+    <main class="phone admin-dashboard">
+      <header class="orange-header"><div class="wordmark"><span class="bus-small"><svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></span>TrackMyBus</div></header>
+      <div class="dashboard-body">
+        <div class="stats-grid">
+          <div class="stat"><small>Active vehicles</small><strong>3</strong><em>↗ On Route</em></div>
+          <div class="stat"><small>Pending<br>approvals</small><strong>2</strong><em style="color:#858078">Requires action</em></div>
+        </div>
+        <section class="dashboard-card">
+          <h2>Deploy Fleet Vehicle</h2>
+          <label class="field"><span>Vehicle type</span><select><option>Standard Minibus (TMB-01)</option><option>School Bus (TMB-02)</option></select></label>
+          <label class="field"><span>Assigned route</span><select><option>North Campus Loop</option><option>Route 42A - Morning</option></select></label>
+          <button class="primary" type="button" onclick="toast('Vehicle deployed to route.')">▷ &nbsp; Deploy Now</button>
+        </section>
+        <section class="coming-soon"><div class="route-icon">♧</div><h2>Route Optimization</h2><p>AI-driven predictive routing to minimize fuel consumption and transit times.</p><span class="tag">Coming Soon</span></section>
+        <section class="dashboard-card">
+          <h2>Pending Approvals <span style="float:right;background:#d51b23;color:white;border-radius:50%;padding:4px 7px;font-size:10px">2</span></h2>
+          <div class="approval"><span class="avatar">♙</span><span class="approval-copy"><b>Sarah Jenkins</b><small>Lic #DL-9482</small></span><button class="approve" type="button">✓</button></div>
+          <div class="approval"><span class="avatar">♙</span><span class="approval-copy"><b>Michael Chen</b><small>Lic #DL-1102</small></span><button class="approve" type="button">✓</button></div>
+        </section>
+        <section class="dashboard-card"><h2>Invite Generator</h2><p style="color:#888;font-size:12px">Generate secure registration links for new staff.</p><div class="invite-row"><button type="button" onclick="toast('Driver link copied.')">⚿ &nbsp; Driver Link</button><button type="button" onclick="toast('Student link copied.')">♧ &nbsp; Student link</button></div></section>
+        <section class="dashboard-card"><div class="subscription"><h2>Subscription</h2><span class="pro-tag">Pro Tier</span></div><button class="exit-account" type="button" onclick="showScreen('home')">⇥ &nbsp; Exit Admin Account</button></section>
+      </div>
+      <nav class="bottom-nav"><button class="active"><b>▦</b>Overview</button><button><b>♙</b>Admin Desk</button><button><b>▣</b>Fleet</button><button><b>♧</b>Approvals</button></nav>
+    </main>
+  </div>
+
+  <div id="driver-dashboard" class="screen">
+    <main class="phone driver-dashboard">
+      <header class="orange-header">
+        <div class="wordmark"><span class="bus-small"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></span>TrackMyBus</div>
+        <div class="tiny-tabs"><span class="active">Cabin</span><span>Route</span><span>Support</span></div>
+      </header>
+      <div class="driver-body">
+        <div class="driver-profile"><span class="avatar">JD</span><span><b>John Doe</b><small>ID: DRV-8429</small></span><span class="onduty">● ON-DUTY</span></div>
+        <section class="trip-control"><h2 class="micro-heading">TRIP CONTROL</h2><button class="start-trip" type="button" onclick="toast('Trip started successfully.')"><span>▷</span>START TRIP</button></section>
+        <div class="caretaker"><span><b class="micro-heading" style="display:block;margin:0 0 8px">STAFF ASSIGNMENT</b>Add Caretaker</span><input type="checkbox" aria-label="Add caretaker" id="caretakerToggle"></div>
+        <button class="primary" style="min-height:40px;font-size:12px" type="button" onclick="showScreen('driver-assistant')">♙ &nbsp; Open Active Route &amp; Roster</button>
+        <div class="route-map"><span class="map-route"></span></div>
+        <h2 class="micro-heading">EMERGENCY</h2>
+        <div class="emergency-grid"><button type="button" onclick="toast('Medical support contacted.')"><b>⊞</b>Medical</button><button type="button" onclick="toast('Fire support contacted.')"><b>♨</b>Fire</button><button type="button" onclick="toast('Police support contacted.')"><b>⛨</b>Police</button></div>
+        <div class="support-row"><span style="color:var(--deep-orange)">♧</span>Dispatch Support<button type="button" onclick="toast('Calling dispatch support…')">Call</button></div>
+        <section class="roster">
+          <h2 class="micro-heading">🟠 BOARDING ROSTER (LIVE) <span style="float:right">Stop 3 of 12</span></h2>
+          <div class="approval"><span class="avatar">SM</span><span class="approval-copy"><b>Sarah Miller</b><small>ID: 84920</small></span><button class="board-button" type="button">♧</button></div>
+          <div class="approval"><span class="avatar">JD</span><span class="approval-copy"><b>James Davis</b><small>ID: 11204</small></span><button class="board-button done" type="button">✓</button></div>
+          <div class="approval"><span class="avatar">AL</span><span class="approval-copy"><b>Amanda Lee</b><small>ID: 55431</small></span><button class="board-button" type="button">♧</button></div>
+        </section>
+      </div>
+      <button class="fab" type="button" aria-label="Notifications" onclick="toast('No new alerts.')">🔔<span class="dot"></span></button>
+      <nav class="bottom-nav"><button><b>▦</b>Overview</button><button><b>♙</b>Admin Desk</button><button class="active"><b>▣</b>Fleet</button><button><b>♧</b>Approvals</button></nav>
+    </main>
+  </div>
+
+  <div id="driver-assistant" class="screen">
+    <main class="phone driver-dashboard">
+      <header class="orange-header">
+        <div class="wordmark"><span class="bus-small"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></span>TrackMyBus</div>
+        <div class="subtitle">Active Route</div>
+      </header>
+      <div class="driver-body">
+        <section class="trip-control">
+          <div class="subscription" style="margin-bottom:9px">
+            <span class="micro-heading" style="margin:0">CURRENT TRIP</span>
+            <span class="pro-tag">Caretaker</span>
+          </div>
+          <h2 style="margin:0 0 6px;font-size:19px">Route 42A - Morning</h2>
+          <small style="color:#777;font-size:10px">▣ BUS-8902 &bull; Driver: M. Singh</small>
+        </section>
+        <section class="roster">
+          <div class="subscription" style="margin-bottom:4px">
+            <h2 style="margin:0;font-size:17px">Boarding Roster</h2>
+            <span class="micro-heading" style="margin:0" id="boardedCount">0/3 Boarded</span>
+          </div>
+          <div class="approval"><span class="avatar">LS</span><span class="approval-copy"><b>Liam Smith</b><small>Stop: Maple St</small></span><span class="trip-toggle"><button class="in on" type="button">IN</button><button class="out" type="button">OUT</button></span></div>
+          <div class="approval"><span class="avatar">EJ</span><span class="approval-copy"><b>Emma Johnson</b><small>Stop: Oak Ave</small></span><span class="trip-toggle"><button class="in" type="button">IN</button><button class="out on" type="button">OUT</button></span></div>
+          <div class="approval"><span class="avatar">NW</span><span class="approval-copy"><b>Noah Williams</b><small>Stop: Pine Ridge</small></span><span class="trip-toggle"><button class="in" type="button">IN</button><button class="out" type="button">OUT</button></span></div>
+          <button class="primary" style="min-height:38px;margin-top:9px;font-size:11px" type="button" onclick="toast('Opening full student list…')">⌄ &nbsp; View All Students</button>
+        </section>
+        <section class="trip-control" style="text-align:center">
+          <h2 class="micro-heading" style="margin:0 0 4px">EMERGENCY REPORTING</h2>
+          <div class="sos-wrap">
+            <button class="sos-button" id="sosButton" type="button"><b>✳</b>SOS</button>
+            <span class="sos-hint" id="sosHint">Hold for 3 seconds to alert<br>Fleet Admin.</span>
+          </div>
+        </section>
+      </div>
+      <button class="fab" type="button" aria-label="Notifications" onclick="toast('No new alerts.')">🔔<span class="dot"></span></button>
+      <nav class="bottom-nav"><button><b>▦</b>Overview</button><button><b>♙</b>Admin Desk</button><button class="active"><b>▣</b>Fleet</button><button><b>♧</b>Approvals</button></nav>
+    </main>
+  </div>
+
+  <div id="parent-login" class="screen">
+    <main class="phone parent-login">
+      <form class="parent-card" id="parentForm">
+        <div class="bus-large">▣</div>
+        <h2>TrackMyBus</h2>
+        <p class="sub">Parent / Guardian Registration</p>
+        <label class="field"><span>Parent or Student Name</span><input required placeholder="♙  Jane Doe"></label>
+        <label class="field"><span>Mobile Number</span><input required type="tel" placeholder="▯  +1 (555) 000-0000"></label>
+        <div class="pair-fields">
+          <label class="field"><span>Root No.</span><input required placeholder="♧  e.g. 14B"></label>
+          <label class="field"><span>School Code</span><input required placeholder="▦  E.G. SCH-01"></label>
+        </div>
+        <div class="parent-warning">⚠ &nbsp; Important: Registration will fail if the provided Root No. or School Code does not match our records exactly.</div>
+        <button class="primary" type="submit">CONTINUE TO OTP &nbsp; →</button>
+        <a href="#" class="help-link" onclick="event.preventDefault();toast('Please contact your school administrator for your codes.')">Need help finding your codes?</a>
+      </form>
+    </main>
+  </div>
+
+  <div id="parent-dashboard" class="screen">
+    <main class="phone parent-dashboard">
+      <header class="orange-header"><div class="wordmark"><span class="bus-small"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M12 2C7.58 2 4 2.5 4 6v10.5c0 .83.67 1.5 1.5 1.5V21c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h7v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3c.83 0 1.5-.67 1.5-1.5V6c0-3.5-3.58-4-8-4Zm-5 4h10v4H7V6Zm0 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg></span>TrackMyBus</div><div class="subtitle">Live Tracking</div></header>
+      <div class="parent-body">
+        <div class="map-caption">PARENT LIVE TRACKING - Oakwood</div>
+        <div class="dark-map">
+          <span class="park left"></span><span class="park right"></span>
+          <span class="place p1">Oakwood Hills</span><span class="place p2">Central Park</span><span class="place p3">Miller Woods</span>
+          <span class="dark-route"></span><span class="map-bubble">Route 42 · On Time</span><span class="dark-bus">▣</span>
+          <div class="map-tools"><button type="button" aria-label="Zoom in">+</button><button type="button" aria-label="Zoom out">−</button><button type="button" aria-label="Locate bus">◎</button></div>
+        </div>
+        <div class="parent-content">
+          <section class="content-card">
+            <h2>◎ Proximity Alert Radius</h2>
+            <div class="range-labels"><span>0.5m</span><span>5m</span></div>
+            <input id="radius" class="range-control" type="range" min="0.5" max="5" step="0.5" value="2">
+            <div class="range-current">Current: <span id="radiusValue">2.0</span> miles</div>
+          </section>
+          <section class="content-card">
+            <h2>Bus &amp; Route Details</h2>
+            <div class="detail-line"><span class="key">Status</span><span class="tag" style="margin:0;background:#ffa000;color:#16120a">Active - On Route</span></div>
+            <div class="detail-line"><span class="key">Vehicle</span><span>Bus #402 (Type C)</span></div>
+            <div class="detail-line"><span class="key">Driver</span><span>Michael Chang</span></div>
+            <div class="detail-line"><span class="key">Est. Arrival</span><strong class="arrival">07:42 AM</strong></div>
+          </section>
+          <section class="content-card">
+            <h2>Alert Preferences</h2>
+            <label class="preference"><span>Proximity Alert<small>Notify when bus enters radius</small></span><input type="checkbox" checked></label>
+            <label class="preference"><span>Boarding Confirmation<small>Notify when student scans ID</small></span><input type="checkbox" checked></label>
+            <label class="preference sos"><span>⚠ SOS / Delay Alerts<small>Critical incidents only</small></span><input type="checkbox" checked></label>
+          </section>
+        </div>
+      </div>
+      <nav class="bottom-nav"><button><b>▦</b>Overview</button><button><b>♙</b>Admin Desk</button><button class="active"><b>▣</b>Fleet</button><button><b>♧</b>Approvals</button></nav>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(screen => screen.classList.toggle("active", screen.id === id));
+      window.scrollTo(0, 0);
+    }
+    document.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.screen)));
+    document.querySelectorAll(".segment button").forEach(button => button.addEventListener("click", () => {
+      button.parentElement.querySelectorAll("button").forEach(item => item.classList.toggle("selected", item === button));
+    }));
+    document.getElementById("registerForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (event.currentTarget.reportValidity()) showScreen("admin-dashboard");
+    });
+    document.getElementById("driverForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (event.currentTarget.reportValidity()) showScreen("driver-dashboard");
+    });
+    document.getElementById("parentForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (event.currentTarget.reportValidity()) showScreen("parent-dashboard");
+    });
+    document.querySelectorAll(".approve").forEach(button => button.addEventListener("click", () => {
+      button.textContent = "✓";
+      button.style.background = "#777";
+      button.disabled = true;
+      toast("Staff member approved.");
+    }));
+    document.querySelectorAll(".board-button:not(.done)").forEach(button => button.addEventListener("click", () => {
+      button.classList.add("done");
+      button.textContent = "✓";
+      toast("Boarding confirmed.");
+    }));
+    document.getElementById("radius").addEventListener("input", event => {
+      document.getElementById("radiusValue").textContent = Number(event.target.value).toFixed(1);
+    });
+
+    // Roster IN/OUT toggles on the Driver Assistant screen
+    document.querySelectorAll(".trip-toggle").forEach(toggle => {
+      toggle.querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
+        const isOut = button.classList.contains("out");
+        toggle.querySelectorAll("button").forEach(item => item.classList.remove("on"));
+        button.classList.add("on");
+        const name = toggle.closest(".approval").querySelector(".approval-copy b").textContent;
+        toast(name + " marked " + (isOut ? "OUT" : "IN") + ".");
+        updateBoardedCount();
+      }));
+    });
+    function updateBoardedCount() {
+      const rows = document.querySelectorAll("#driver-assistant .roster .approval");
+      const boarded = [...rows].filter(row => {
+        const on = row.querySelector(".trip-toggle .on");
+        return on && on.classList.contains("in");
+      }).length;
+      const label = document.getElementById("boardedCount");
+      if (label) label.textContent = boarded + "/" + rows.length + " Boarded";
+    }
+    updateBoardedCount();
+
+    // SOS: hold for 3 seconds to alert the Fleet Admin
+    const sosButton = document.getElementById("sosButton");
+    if (sosButton) {
+      const sosHint = document.getElementById("sosHint");
+      const HOLD_MS = 3000;
+      let holdTimer = null;
+      let holdDone = false;
+      const startHold = event => {
+        event.preventDefault();
+        if (holdDone) return;
+        sosButton.classList.add("holding");
+        sosHint.innerHTML = "Keep holding…<br>Alerting Fleet Admin";
+        holdTimer = setTimeout(() => {
+          holdDone = true;
+          sosButton.classList.remove("holding");
+          sosHint.innerHTML = "Alert sent to Fleet Admin.";
+          toast("SOS alert sent to Fleet Admin.");
+          setTimeout(() => {
+            holdDone = false;
+            sosHint.innerHTML = "Hold for 3 seconds to alert<br>Fleet Admin.";
+          }, 3000);
+        }, HOLD_MS);
+      };
+      const cancelHold = () => {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        if (holdDone) return;
+        sosButton.classList.remove("holding");
+        sosHint.innerHTML = "Hold for 3 seconds to alert<br>Fleet Admin.";
+      };
+      sosButton.addEventListener("mousedown", startHold);
+      sosButton.addEventListener("touchstart", startHold, { passive: false });
+      ["mouseup", "mouseleave", "touchend", "touchcancel", "pointercancel"].forEach(evt => sosButton.addEventListener(evt, cancelHold));
+    }
+    // Bottom navigation tabs switch the active tab styling
+    document.querySelectorAll(".bottom-nav").forEach(nav => {
+      nav.querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
+        nav.querySelectorAll("button").forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        toast(button.textContent.trim() + " tab selected.");
+      }));
+    });
+
+    // Live-tracking map zoom controls
+    const darkMap = document.querySelector(".dark-map");
+    if (darkMap) {
+      let zoom = 1;
+      const applyZoom = () => {
+        darkMap.style.setProperty("--map-zoom", zoom);
+        darkMap.querySelectorAll(".place, .dark-route, .dark-bus, .map-bubble, .park").forEach(el => {
+          el.style.transform = el.dataset.baseTransform || el.style.transform || "";
+          el.style.transformOrigin = "center";
+          el.style.scale = zoom;
+        });
+      };
+      darkMap.querySelectorAll(".map-tools button").forEach(button => button.addEventListener("click", () => {
+        const label = button.getAttribute("aria-label") || "";
+        if (label.includes("in")) zoom = Math.min(2, zoom + 0.25);
+        else if (label.includes("out")) zoom = Math.max(0.75, zoom - 0.25);
+        else { zoom = 1; toast("Re-centred on bus location."); }
+        applyZoom();
+      }));
+    }
+
+    // Caretaker assignment toggle
+    const caretakerToggle = document.getElementById("caretakerToggle");
+    if (caretakerToggle) caretakerToggle.addEventListener("change", event => {
+      toast(event.target.checked ? "Caretaker assigned to this trip." : "Caretaker removed.");
+    });
+
+    let toastTimeout;
+    function toast(message) {
+      const element = document.getElementById("toast");
+      element.textContent = message;
+      element.classList.add("show");
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => element.classList.remove("show"), 2200);
+    }
+  </script>
+</body>
+</html>
